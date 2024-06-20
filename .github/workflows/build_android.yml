@@ -1,15 +1,42 @@
-name: Build Android
+name: Flutter CI/CD
 
 on:
   push:
-    paths:
-      - '**.dart'
-      - '**.yaml'
-      - 'android/**'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build_android:
-    name: Build Android
-    uses: apivideo/.github/.github/workflows/flutter_build_android.yml@main
-    with:
-      cache: true
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        flutter_version: [2.5.0]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ matrix.flutter_version }}
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Run tests
+      run: flutter test
+
+    - name: Build APK
+      run: flutter build apk --release
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-artifacts
+        path: build/app/outputs/flutter-apk/app-release.apk
